@@ -9,12 +9,21 @@ from dotenv import load_dotenv
 import os
 
 if __name__ == "__main__":
+    print("-------torch version check start-----------")
+    print(f'torch.__version__: {torch.__version__}')
+    print(f'GPU 사용여부: {torch.cuda.is_available()}')
+    gpu_count = torch.cuda.device_count()
+    print(f'GPU count: {gpu_count}')
+    if gpu_count > 0:
+        print(f'GPU name: {torch.cuda.get_device_name(0)}')
+    print("-------torch version check finish-----------")
+
     load_dotenv("../.env")
     batch_size = 2
 
     env = TSPEnv(generator_params=dict(num_loc=20))
     reward, td, actions = rollout(env, env.reset(batch_size=[batch_size]), random_policy)
-    env.render(td, actions)
+    # env.render(td, actions)
 
     # Instantiate our environment
     env = TSPEnv(generator_params=dict(num_loc=20))
