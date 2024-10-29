@@ -57,7 +57,7 @@ RUN adduser --disabled-password --gecos '' --shell /bin/bash $USER_NAME && \
 USER $USER_NAME
 
 # All users can use /home/user as their home directory
-ENV HOME /home/$USER_NAME
+ENV HOME=/home/$USER_NAME
 RUN mkdir $HOME/.cache $HOME/.config && \
     chmod -R 777 $HOME && \
 	mkdir $HOME/workspace
@@ -90,7 +90,7 @@ COPY . .
 # Install Python Packages
 RUN pip install --upgrade pip && \
 	pip install -r requirements.txt && \
-	chmod +x ./start.sh
+	sudo chmod +x ./start.sh
 
 
 CMD [ "./start.sh"]
