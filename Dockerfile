@@ -59,10 +59,10 @@ USER $USER_NAME
 # All users can use /home/user as their home directory
 ENV HOME /home/$USER_NAME
 RUN mkdir $HOME/.cache $HOME/.config && \
-    chmod -R 777 $HOME 
+    chmod -R 777 $HOME && \
+	mkdir $HOME/workspace
 
 # Create a workspace directory
-RUN mkdir $HOME/workspace
 WORKDIR $HOME/workspace
 
 # Re-run ssh when the container restarts.
@@ -92,6 +92,6 @@ RUN pip install --upgrade pip && \
 	pip install -r requirements.txt
 
 
-CMD [ "python3" "./src/main.py"]
+CMD [ "./start.sh"]
 
 
