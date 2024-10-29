@@ -89,10 +89,6 @@ COPY . .
 
 # Install Python Packages
 RUN pip install --upgrade pip && \
-	pip install -r requirements.txt && \
-	/bin/bash
+	pip install -r requirements.txt
 
-
-CMD [ "python" "./src/main.py"]
-
-
+CMD [ "/bin/bash"]
