@@ -51,7 +51,9 @@ if __name__ == "__main__":
     out = policy(td_init.clone(), env, phase="test", decode_type="greedy", return_actions=True)
     actions_untrained = out['actions'].cpu().detach()
     rewards_untrained = out['reward'].cpu().detach()
-    
+    print("------------------")
+    print(os.environ.get("WANDB_API_KEY"))
+    print("------------------")
     wandb.login(
         key=os.environ.get("WANDB_API_KEY"),
         relogin=True,
