@@ -49,8 +49,8 @@ RUN echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config && \
     echo "PermitEmptyPasswords yes" >> /etc/ssh/sshd_config
 
 # Create a non-root user and switch to it & Adding User to the sudoers File
-ARG USER_NAME user
-ARG USER_PASSWORD 0000
+ARG USER_NAME=user
+ARG USER_PASSWORD=0000
 RUN adduser --disabled-password --gecos '' --shell /bin/bash $USER_NAME && \
     echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USER_NAME && \
     echo "$USER_NAME:$USER_PASSWORD" | chpasswd 
@@ -69,7 +69,7 @@ WORKDIR $HOME/workspace
 RUN echo "sudo service ssh start > /dev/null" >> $HOME/.bashrc
 
 # Set up python environment with pyenv
-ARG PYTHON_VERSION 3.10.6
+ARG PYTHON_VERSION=3.10.6
 RUN curl https://pyenv.run | bash
 ENV PYENV_ROOT="$HOME/.pyenv"
 ENV PATH "$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
