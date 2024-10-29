@@ -1,49 +1,94 @@
 # 참고 https://ebbnflow.tistory.com/340
+# https://velog.io/@whattsup_kim/GPU-%EA%B0%9C%EB%B0%9C%ED%99%98%EA%B2%BD-%EA%B5%AC%EC%B6%95%ED%95%98%EA%B8%B0-docker%EB%A5%BC-%ED%99%9C%EC%9A%A9%ED%95%98%EC%97%AC-%EA%B0%9C%EB%B0%9C%ED%99%98%EA%B2%BD-%ED%95%9C-%EB%B2%88%EC%97%90-%EA%B5%AC%EC%B6%95%ED%95%98%EA%B8%B0
 
 # Base Image
-FROM nvidia/cuda:11.2.0-base-ubuntu20.04
+FROM nvidia/cuda:12.0.0-base-ubuntu20.04
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 
-# Basic Utils
+# Remove any third-party apt sources to avoid issues with expiring keys.
+RUN rm -f /etc/apt/sources.list.d/*.list
+
+# Install some basic utilities & python prerequisites
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get -qq update && \
-	apt-get install --no-install-recommends -y build-essential \
-	bzip2 \
-	ca-certificates \
-	curl \
-	git \
-	libcanberra-gtk-module \
-	libgtk2.0-0 \
-	libx11-6 \
-	sudo \
-	graphviz \
-	vim
+RUN apt-get update -y && apt-get install -y --no-install-recommends\
+    vim \
+    curl \
+    apt-utils \
+    ssh \
+    tree \
+    ca-certificates \
+    sudo \
+    git \
+    bzip2 \
+    libx11-6 \
+    make \
+    build-essential \
+    libssl-dev \
+    zlib1g-dev \
+    libbz2-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    wget \
+    llvm \
+    libncursesw5-dev \
+    xz-utils \
+    tk-dev \
+    libxml2-dev \
+    libxmlsec1-dev \
+    libffi-dev \
+    liblzma-dev \
+    python3-openssl && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install Miniconda
-ENV PATH /opt/conda/bin:$PATH
-RUN apt-get install -y wget ibglib2.0-0 libxext6 libsm6 libxrender1 \
-	mercurial subversion
-RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
-	/bin/bash ~/miniconda.sh -b -p /opt/conda && \
-	rm ~/miniconda.sh && \
-	ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
-	echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
-	echo "conda activate base" >> ~/.bashrc
-RUN apt-get install -y default-jdk default-jre
-RUN apt-get install -y grep sed dpkg && \
-	TINI_VERSION=`curl https://github.com/krallin/tini/releases/latest | grep -o "/v.*\"" | sed 's:^..\(.*\).$:\1:'` && \
-	curl -L "https://github.com/krallin/tini/releases/download/v${TINI_VERSION}/tini_${TINI_VERSION}.deb" > tini.deb && \
-	dpkg -i tini.deb && \
-	rm tini.deb && \
-	apt-get clean
+# Set up time zone
+ENV TZ=Asia/Seoul
+RUN sudo ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
 
-    
+# Add config for ssh connection
+RUN echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config && \
+    echo "PermitEmptyPasswords yes" >> /etc/ssh/sshd_config
+
+# Create a non-root user and switch to it & Adding User to the sudoers File
+ARG USER_NAME user
+ARG USER_PASSWORD 0000
+RUN adduser --disabled-password --gecos '' --shell /bin/bash $USER_NAME && \
+    echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USER_NAME && \
+    echo "$USER_NAME:$USER_PASSWORD" | chpasswd 
+USER $USER_NAME
+
+# All users can use /home/user as their home directory
+ENV HOME /home/$USER_NAME
+RUN mkdir $HOME/.cache $HOME/.config && \
+    chmod -R 777 $HOME 
+
+# Create a workspace directory
+RUN mkdir $HOME/workspace
+WORKDIR $HOME/workspace
+
+# Re-run ssh when the container restarts.
+RUN echo "sudo service ssh start > /dev/null" >> $HOME/.bashrc
+
+# Set up python environment with pyenv
+ARG PYTHON_VERSION 3.10.6
+RUN curl https://pyenv.run | bash
+ENV PYENV_ROOT="$HOME/.pyenv"
+ENV PATH "$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
+ENV eval "$(pyenv init -)"
+RUN cd $HOME && /bin/bash -c "source .bashrc" && \
+    /bin/bash -c "pyenv install -v $PYTHON_VERSION" && \
+    /bin/bash -c "pyenv global $PYTHON_VERSION"
+
+# Install Poetry
+ENV PATH "$HOME/.local/bin:$PATH"
+ENV PYTHON_KEYRING_BACKEND keyring.backends.null.Keyring
+RUN curl -sSL https://install.python-poetry.org | python - && \
+    poetry config virtualenvs.in-project true && \ 
+    poetry config virtualenvs.path "./.venv"
+
 COPY . .
 
 # Install Python Packages
-RUN conda install av -c conda-forge && \
-	conda install -c conda-forge jupyterlab && \
-	pip install --upgrade pip && \
+RUN pip install --upgrade pip && \
 	pip install -r requirements.txt
 
 
