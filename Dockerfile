@@ -90,9 +90,9 @@ COPY . .
 # Install Python Packages
 RUN pip install --upgrade pip && \
 	pip install -r requirements.txt && \
-	sudo chmod +x ./start.sh
+	/bin/bash
 
 
-CMD [ "./start.sh"]
+CMD [ "python" "./src/main.py"]
 
 

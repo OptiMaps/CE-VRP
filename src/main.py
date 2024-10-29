@@ -18,7 +18,7 @@ if __name__ == "__main__":
         print(f'GPU name: {torch.cuda.get_device_name(0)}')
     print("-------torch version check finish-----------")
 
-    load_dotenv("../.env")
+    load_dotenv()
     batch_size = 2
 
     env = TSPEnv(generator_params=dict(num_loc=20))
