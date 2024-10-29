@@ -72,15 +72,15 @@ RUN echo "sudo service ssh start > /dev/null" >> $HOME/.bashrc
 ARG PYTHON_VERSION=3.10.6
 RUN curl https://pyenv.run | bash
 ENV PYENV_ROOT="$HOME/.pyenv"
-ENV PATH "$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
-ENV eval "$(pyenv init -)"
+ENV PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
+ENV eval="$(pyenv init -)"
 RUN cd $HOME && /bin/bash -c "source .bashrc" && \
     /bin/bash -c "pyenv install -v $PYTHON_VERSION" && \
     /bin/bash -c "pyenv global $PYTHON_VERSION"
 
 # Install Poetry
-ENV PATH "$HOME/.local/bin:$PATH"
-ENV PYTHON_KEYRING_BACKEND keyring.backends.null.Keyring
+ENV PATH="$HOME/.local/bin:$PATH"
+ENV PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
 RUN curl -sSL https://install.python-poetry.org | python - && \
     poetry config virtualenvs.in-project true && \ 
     poetry config virtualenvs.path "./.venv"
@@ -89,7 +89,8 @@ COPY . .
 
 # Install Python Packages
 RUN pip install --upgrade pip && \
-	pip install -r requirements.txt
+	pip install -r requirements.txt && \
+	chmod +x ./start.sh
 
 
 CMD [ "./start.sh"]
