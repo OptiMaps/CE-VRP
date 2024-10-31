@@ -105,9 +105,14 @@ RUN pip install --upgrade pip && \
                 performer-pytorch \
                 tensorboardX \
                 ogb \
-                wandb && \
+                wandb \
+                jupyterlab && \
                 pip install setuptools wheel packaging && \
                 pip install --no-use-pep517 causal-conv1d mamba-ssm 
 
 
+COPY entrypoint.sh .
+RUN sudo chmod +x ./entrypoint.sh
+
+COPY .env .
 ENTRYPOINT ["/bin/bash","-c","./entrypoint.sh"]
