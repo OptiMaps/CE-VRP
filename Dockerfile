@@ -115,4 +115,6 @@ COPY entrypoint.sh .
 RUN sudo chmod +x ./entrypoint.sh
 
 COPY .env .
+RUN mkdir ${HOME}/artifect
+
 ENTRYPOINT ["/bin/bash","-c","./entrypoint.sh"]
