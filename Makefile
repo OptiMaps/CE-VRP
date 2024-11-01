@@ -26,3 +26,6 @@ pull:
 
 push:
 	@docker push $(BASE_IMAGE):$(TAG_NAME)
+
+clean:
+	@docker rm $(CONTAINER_NAME) --force
