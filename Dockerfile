@@ -1,8 +1,7 @@
-# https://velog.io/@whattsup_kim/GPU-%EA%B0%9C%EB%B0%9C%ED%99%98%EA%B2%BD-%EA%B5%AC%EC%B6%95%ED%95%98%EA%B8%B0-docker%EB%A5%BC-%ED%99%9C%EC%9A%A9%ED%95%98%EC%97%AC-%EA%B0%9C%EB%B0%9C%ED%99%98%EA%B2%BD-%ED%95%9C-%EB%B2%88%EC%97%90-%EA%B5%AC%EC%B6%95%ED%95%98%EA%B8%B0
-# https://jjuke-brain.tistory.com/entry/GPU-%EC%84%9C%EB%B2%84-%EC%82%AC%EC%9A%A9%EB%B2%95-CUDA-PyTorch-%EB%B2%84%EC%A0%84-%EB%A7%9E%EC%B6%94%EA%B8%B0-%EC%B4%9D%EC%A0%95%EB%A6%AC
+# https://download.pytorch.org/whl/cu117
 
 # Base Image
-FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
+FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 
 # Remove any third-party apt sources to avoid issues with expiring keys.
@@ -94,35 +93,21 @@ RUN /bin/bash -c "pyenv local $PYTHON_VERSION" && \
 COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip uninstall torch_geometric && \
-    pip install torch==2.1.1 torchvision==0.16.1 torchaudio==2.1.1 --index-url https://download.pytorch.org/whl/cu118 && \
-    pip install pyg_lib torch_geometric torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.1.1+cu118.html && \
-    pip install openbabel-wheel \
+    pip install torch==1.13.0 torchvision==0.14.0 torchaudio==0.13.0 --index-url https://download.pytorch.org/whl/cu117 && \
+    pip install setuptools wheel packaging && \
+    pip install pyg_lib torch_geometric torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-1.13.0+cu117.html && \
+    pip install --no-deps openbabel-wheel \
                 fsspec \
                 rdkit \
-                pytorch-lightning \
                 yacs \
                 performer-pytorch \
                 tensorboardX \
                 ogb \
                 wandb && \
-                pip install setuptools wheel packaging && \
-                pip install causal_conv1d==1.1.1 && \
-                pip install mamba-ssm==1.2.0.post1
-# RUN pip install setuptools wheel packaging
-# RUN pip install causal_conv1d==1.1.1
-# RUN pip install mamba-ssm==1.2.0.post1
-
-# RUN pip install https://github.com/Dao-AILab/causal-conv1d/releases/download/v1.4.0/causal_conv1d-1.4.0+cu118torch2.0cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
-
-# RUN git clone https://github.com/Dao-AILab/causal-conv1d.git
-# RUN ls -la && cd causal-conv1d && git checkout v1.4.0
-# ENV CAUSAL_CONV1D_FORCE_BUILD=TRUE
-# RUN cd causal-conv1d && pip install .
-
-# RUN pip install causal-conv1d
-# pip install --no-use-pep517 causal-conv1d mamba-ssm && \
-# RUN pip install rl4co jupyterlab
-
+    pip install causal_conv1d==1.2.0.post2 && \
+    pip install mamba-ssm==1.2.0.post1 && \
+    pip install -r requirements.txt && \
+    pip install torch-geometric==2.0.4
 
 COPY entrypoint.sh .
 RUN sudo chmod +x ./entrypoint.sh
