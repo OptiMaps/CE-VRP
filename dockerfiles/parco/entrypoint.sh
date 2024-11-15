@@ -3,7 +3,7 @@
 # restart ssh service
 /bin/bash -c "sudo service ssh start > /dev/null"
 
-/bin/bash -c "git clone https://github.com/OptiMaps/TrainRepo $HOME/workspace/graph-mamba/TrainRepo"
+/bin/bash -c "git clone https://github.com/OptiMaps/TrainRepo $HOME/workspace/optimap/TrainRepo"
 
 /bin/bash -c "mv -f TrainRepo/* ."
 
