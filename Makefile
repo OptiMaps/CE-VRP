@@ -13,6 +13,7 @@ train:
 container:
 	@docker run -itd \
 				--name $(CONTAINER_NAME) \
+				--gpus all \
 				-v /tmp/artifect:/home/$(USER_NAME)/artifect \
 				-p 3030:3030 \
 				--restart always \
