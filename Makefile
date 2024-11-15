@@ -1,8 +1,9 @@
-TARGET=src/main.py
+TARGET=parco/train.py
 CONTAINER_NAME=rl-server
 BASE_IMAGE=falconlee236/rl-image
-TAG_NAME=graph-mamba
+TAG_NAME=parco
 USER_NAME=user
+DOCKERFILE_SRC=dockerfiles/$(TAG_NAME)/Dockerfile
 
 all: container
 
@@ -19,7 +20,7 @@ container:
 				$(BASE_IMAGE):$(TAG_NAME)
 
 build:
-	@docker build -t $(BASE_IMAGE):$(TAG_NAME) .
+	@docker build -t $(BASE_IMAGE):$(TAG_NAME) . -f $(DOCKERFILE_SRC)
 
 pull:
 	@docker pull $(BASE_IMAGE):$(TAG_NAME)
