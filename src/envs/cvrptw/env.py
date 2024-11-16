@@ -10,7 +10,7 @@ from rl4co.data.utils import (
     load_solomon_instance,
     load_solomon_solution,
 )
-from rl4co.envs.routing.cvrp.env import CVRPEnv
+from ..cvrp.env import CVRPEnv
 from rl4co.utils.ops import gather_by_index, get_distance
 
 from ..cvrp.generator import CVRPGenerator
