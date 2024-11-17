@@ -37,12 +37,12 @@ class MaskingEncoder:
         return onehot
 
     @staticmethod
-    def linear_encode(self, reasons_dict: dict) -> torch.Tensor:
+    def linear_encode(reasons_dict: dict, linear_layer: nn.Linear) -> torch.Tensor:
         """Encodes reasons using a linear layer"""
         onehot = MaskingEncoder.onehot_encode(reasons_dict)
         batch_size, num_loc, num_reasons = onehot.shape
-        
+
         # linear projection
-        encoded = self.linear(onehot)
+        encoded = linear_layer(onehot)
         
         return encoded
