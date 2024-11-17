@@ -28,9 +28,6 @@ class MaskingEncoder:
     @staticmethod
     def onehot_encode(reasons_dict: dict) -> torch.Tensor:
         """Encodes reasons into one-hot vectors"""
-        batch_size, num_loc = next(iter(reasons_dict.values())).shape
-        num_reasons = len(reasons_dict)
-        
         # Stack the values of reasons_dict along the last dimension
         onehot = torch.stack(list(reasons_dict.values()), dim=-1)
             
