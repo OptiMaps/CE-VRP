@@ -10,6 +10,9 @@ import torch.nn as nn
 class MaskingEncoder:
     """Encoder for masking reasons"""
     
+    def __init__(self, hidden_size: int = 8):
+        self.linear = nn.Linear(num_reasons, hidden_size)
+
     @staticmethod
     def label_encode(reasons_dict: dict) -> torch.Tensor:
         """Encodes reasons into integer labels"""
@@ -34,13 +37,12 @@ class MaskingEncoder:
         return onehot
 
     @staticmethod
-    def linear_encode(reasons_dict: dict, hidden_size: int = 8) -> torch.Tensor:
+    def linear_encode(self, reasons_dict: dict) -> torch.Tensor:
         """Encodes reasons using a linear layer"""
         onehot = MaskingEncoder.onehot_encode(reasons_dict)
         batch_size, num_loc, num_reasons = onehot.shape
         
         # linear projection
-        linear = nn.Linear(num_reasons, hidden_size)
-        encoded = linear(onehot)
+        encoded = self.linear(onehot)
         
         return encoded
