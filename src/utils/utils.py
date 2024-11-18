@@ -28,9 +28,15 @@ class MaskingEncoder:
     @staticmethod
     def onehot_encode(reasons_dict: dict) -> torch.Tensor:
         """Encodes reasons into one-hot vectors"""
+        
+        # Check if all keys have values
+        for key in reasons_dict:
+            if reasons_dict[key] is None or reasons_dict[key].numel() == 0:
+                raise ValueError(f"Key '{key}' has no values.")
+        
         # Stack the values of reasons_dict along the last dimension
         onehot = torch.stack(list(reasons_dict.values()), dim=-1)
-            
+        
         return onehot
 
     @staticmethod
