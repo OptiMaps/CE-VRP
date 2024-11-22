@@ -148,7 +148,7 @@ class CVRPEnv(RL4COEnvBase):
 
         # update mask and reasons
         td.update({
-            "reasons": {
+            "masking_reasons": {
                 "exceeds_capacity": exceeds_cap, # shape: [batch_size, num_loc]
                 "already_visited": td["visited"][..., 1:].to(exceeds_cap.dtype), # shape: [batch_size, num_loc]
             }
