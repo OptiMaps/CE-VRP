@@ -29,6 +29,10 @@ class MaskingEncoder:
     def onehot_encode(reasons_dict: dict) -> torch.Tensor:
         """Encodes reasons into one-hot vectors"""
         
+        # Check if reasons_dict is empty
+        if not reasons_dict:
+            raise ValueError("The reasons_dict is empty.")
+        
         # Check if all keys have values
         for key in reasons_dict:
             if reasons_dict[key] is None or reasons_dict[key].numel() == 0:
