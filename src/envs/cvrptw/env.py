@@ -117,7 +117,7 @@ class CVRPTWEnv(CVRPEnv):
 
         # update mask and reasons
         td.update({
-            "reasons": {            
+            "masking_reasons": {            
                 "time_window": ~can_reach_in_time,  # shape: [batch_size, num_loc]
                 **reasons
             }
