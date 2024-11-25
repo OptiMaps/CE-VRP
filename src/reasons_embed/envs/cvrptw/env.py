@@ -17,7 +17,7 @@ from ..cvrp.generator import CVRPGenerator
 from .generator import CVRPTWGenerator
 from .render import render
 
-##TODO: CVRPTWEnv 상속 후 get_action_mask method만 수정
+
 class CVRPTWEnv(CVRPEnv):
     """Capacitated Vehicle Routing Problem with Time Windows (CVRPTW) environment.
     Inherits from the CVRPEnv class in which customers are considered.

@@ -1,19 +1,47 @@
-from typing import Tuple
+from dataclasses import dataclass, fields
+from typing import Tuple, Union
+
 import torch
 import torch.nn as nn
 
-from rl4co.envs import RL4COEnvBase
-from rl4co.models.zoo.am.decoder import AttentionModelDecoder, PrecomputedCache
-from rl4co.utils.ops import unbatchify
-from rl4co.models.nn.attention import PointerAttention
-from rl4co.utils.pylogger import get_pylogger
+from einops import rearrange
 from tensordict import TensorDict
 from torch import Tensor
 
-from src.models.env_embedding import env_dynamic_embedding, env_context_embedding
+from rl4co.envs import RL4COEnvBase
+from rl4co.models.zoo.am.decoder import AttentionModelDecoder
+from rl4co.models.nn.attention import PointerAttention, PointerAttnMoE
+from src.models.env_embeddings import env_context_embedding, env_dynamic_embedding
+from rl4co.models.nn.env_embeddings.dynamic import StaticEmbedding
+from rl4co.utils.ops import batchify, unbatchify
+from rl4co.utils.pylogger import get_pylogger
+
+log = get_pylogger(__name__)
 
 
-class ConstraintAttentionModelDecoder(AttentionModelDecoder):
+@dataclass
+class PrecomputedCache:
+    node_embeddings: Tensor
+    graph_context: Union[Tensor, float]
+    glimpse_key: Tensor
+    glimpse_val: Tensor
+    logit_key: Tensor
+
+    @property
+    def fields(self):
+        return tuple(getattr(self, x.name) for x in fields(self))
+
+    def batchify(self, num_starts):
+        new_embs = []
+        for emb in self.fields:
+            if isinstance(emb, Tensor) or isinstance(emb, TensorDict):
+                new_embs.append(batchify(emb, num_starts))
+            else:
+                new_embs.append(emb)
+        return PrecomputedCache(*new_embs)
+
+
+class AttentionModelDecoder(AttentionModelDecoder):
     """
     Auto-regressive decoder based on Kool et al. (2019): https://arxiv.org/abs/1803.08475.
     Given the environment state and the embeddings, compute the logits and sample actions autoregressively until
@@ -42,7 +70,7 @@ class ConstraintAttentionModelDecoder(AttentionModelDecoder):
         self,
         embed_dim: int = 128,
         num_heads: int = 8,
-        env_name: str = "cvrp",
+        env_name: str = "CVRP",
         context_embedding: nn.Module = None,
         dynamic_embedding: nn.Module = None,
         mask_inner: bool = True,
@@ -110,9 +138,7 @@ class ConstraintAttentionModelDecoder(AttentionModelDecoder):
             graph_context_cache = graph_context_cache.unsqueeze(1)
 
         step_context = self.context_embedding(node_embeds_cache, td)
-
-        ## TODO: 여기 차원 맞는지 다시 확인해야함, 두개의 projection을 둘다 2*embed_dim으로 할 수도 있고, concat할 수도 있음 기존은 +연산임
-        glimpse_q = torch.cat([step_context, graph_context_cache], dim=-1)
+        glimpse_q = step_context + graph_context_cache
         # add seq_len dim if not present
         glimpse_q = glimpse_q.unsqueeze(1) if glimpse_q.ndim == 2 else glimpse_q
 
@@ -126,10 +152,9 @@ class ConstraintAttentionModelDecoder(AttentionModelDecoder):
         )
         # Compute dynamic embeddings and add to static embeddings
         glimpse_k_dyn, glimpse_v_dyn, logit_k_dyn = self.dynamic_embedding(td)
-        ## TODO: concat static and dynamic embeddings
-        glimpse_k = torch.cat([glimpse_k_stat, glimpse_k_dyn], dim=-1)
-        glimpse_v = torch.cat([glimpse_v_stat, glimpse_v_dyn], dim=-1)
-        logit_k = torch.cat([logit_k_stat, logit_k_dyn], dim=-1)
+        glimpse_k = glimpse_k_stat + glimpse_k_dyn
+        glimpse_v = glimpse_v_stat + glimpse_v_dyn
+        logit_k = logit_k_stat + logit_k_dyn
 
         return glimpse_k, glimpse_v, logit_k
 
@@ -162,9 +187,8 @@ class ConstraintAttentionModelDecoder(AttentionModelDecoder):
         glimpse_k, glimpse_v, logit_k = self._compute_kvl(cached, td)
 
         # Compute logits
-        ## TODO: 우리는 뒷단에서 masking을 해주기 때문에 여기서는 따로 masking을 안해줌
-        # mask = td["action_mask"]
-        logits = self.pointer(glimpse_q, glimpse_k, glimpse_v, logit_k)
+        mask = td["action_mask"]
+        logits = self.pointer(glimpse_q, glimpse_k, glimpse_v, logit_k, mask)
 
         # Now we need to reshape the logits and mask to [B*S,N,...] is num_starts > 1 without dynamic embeddings
         # note that rearranging order is important here

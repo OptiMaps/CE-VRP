@@ -6,7 +6,7 @@ from tensordict.tensordict import TensorDict
 from torchrl.data import Bounded, Composite, Unbounded
 
 from rl4co.data.utils import load_npz_to_tensordict
-from rl4co.envs.common.base import RL4COEnvBase
+from rl4co.envs import CVRPEnv
 from rl4co.utils.ops import gather_by_index, get_tour_length
 from rl4co.utils.pylogger import get_pylogger
 
@@ -22,9 +22,7 @@ from .render import render
 log = get_pylogger(__name__)
 
 
-##TODO: CVRPEnv 상속 후 get_action_mask method만 수정
-
-class CVRPEnv(RL4COEnvBase):
+class CVRPEnv(CVRPEnv):
     """Capacitated Vehicle Routing Problem (CVRP) environment.
     At each step, the agent chooses a customer to visit depending on the current location and the remaining capacity.
     When the agent visits a customer, the remaining capacity is updated. If the remaining capacity is not enough to
@@ -148,11 +146,10 @@ class CVRPEnv(RL4COEnvBase):
 
         # update mask and reasons
         td.update({
-            
-            "masking_reasons": {
-                "exceeds_capacity": exceeds_cap, # shape: [batch_size, num_loc]
-                "already_visited": td["visited"][..., 1:].to(exceeds_cap.dtype), # shape: [batch_size, num_loc]
-            }
+            "masking_reasons": TensorDict({
+                "exceeds_capacity": exceeds_cap,
+                "already_visited": td["visited"][..., 1:].to(exceeds_cap.dtype),
+            }, batch_size=td.batch_size)
         })
 
         return final_mask
