@@ -112,14 +112,8 @@ class CVRPTWEnv(CVRPEnv):
         )  # I only need to start the service before the time window ends, not finish it.
         mask = not_masked & can_reach_in_time # shape: [batch_size, num_loc+1]
 
-        # update mask and reasons
-        td.update({
-            "masking_reasons": TensorDict({           
-                # depot time window is not considered
-                "time_window": ~can_reach_in_time[..., 1:],  # shape: [batch_size, num_loc]
-                **td["masking_reasons"]
-            }, batch_size=td.batch_size)
-        })
+        # masking_reasons update time_window constraint
+        td["masking_reasons"]["time_window"] = ~can_reach_in_time[..., 1:]  
 
         return mask
 
