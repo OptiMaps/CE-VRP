@@ -5,6 +5,6 @@
 
 /bin/bash -c "git clone https://github.com/OptiMaps/TrainRepo $HOME/workspace/optimap/TrainRepo"
 
-/bin/bash -c "cd ~/optimap/TrainRepo/parco && pip install -e ."
+/bin/bash -c "cd $HOME/workspace/optimap/TrainRepo/parco && pip install -e ."
 
 /bin/bash
