@@ -17,4 +17,5 @@ make TAG_NAME=parco-cuda123
 make clean
 ```
 
-이때 sangyleegcp1는 각자 username을 적으면 된다.
+## Contact
+if you do not understand this code, feel free to contact falconlee236@gmail.com
