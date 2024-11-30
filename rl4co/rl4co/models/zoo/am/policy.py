@@ -76,6 +76,7 @@ class AttentionModelPolicy(AutoregressivePolicy):
         val_decode_type: str = "greedy",
         test_decode_type: str = "greedy",
         moe_kwargs: dict = {"encoder": None, "decoder": None},
+        constraint_method: str = 'none',
         **unused_kwargs,
     ):
         if encoder is None:
@@ -106,6 +107,7 @@ class AttentionModelPolicy(AutoregressivePolicy):
                 use_graph_context=use_graph_context,
                 check_nan=check_nan,
                 moe_kwargs=moe_kwargs["decoder"],
+                constraint_method=constraint_method,
             )
 
         super(AttentionModelPolicy, self).__init__(
