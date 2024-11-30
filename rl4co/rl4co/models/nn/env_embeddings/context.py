@@ -143,56 +143,104 @@ class TSPContext(EnvContext):
 class VRPContext(EnvContext):
     """Context embedding for the Capacitated Vehicle Routing Problem (CVRP)."""
 
-    def __init__(self, embed_dim):
-        # embed_dim + 1 (capacity) + embed_dim (constraint) = 2 * embed_dim + 1
+    def __init__(self, embed_dim, constraint_method='none'):
+        # Calculate step_context_dim based on constraint method
+        if constraint_method == 'none':
+            step_context_dim = embed_dim + 1
+        elif constraint_method == 'linear':
+            step_context_dim = 2 * embed_dim + 1  # original node embedding + capacity + contraint embedding
+        elif constraint_method == 'weighted':
+            step_context_dim = embed_dim + 3  # node embedding + capacity + constraint node weights mean
+        
         super(VRPContext, self).__init__(
-            embed_dim=embed_dim, 
-            step_context_dim=2 * embed_dim + 1,  
-            num_reasons=2
+            embed_dim=embed_dim,
+            step_context_dim=step_context_dim,
+            num_reasons=2 if constraint_method != 'none' else None
         )
-
+        
+        self.constraint_method = constraint_method
+        if constraint_method == 'weighted':
+            self.node_weights = nn.Parameter(torch.ones(1))
+    
     def _state_embedding(self, embeddings, td):
-        """Get state embedding for VRP"""
         # Get capacity state [batch_size, 1]
         state_embedding = td["vehicle_capacity"] - td["used_capacity"]
         
+        if self.constraint_method == 'none':
+            return state_embedding
+            
         # Get constraint embedding [batch_size, num_loc, num_reasons]
         constraint_embedding = self.masking_encoder.onehot_encode(td["masking_reasons"])
-        if constraint_embedding is not None:
-            # Project constraints to embedding space [batch_size, num_loc, embed_dim]
+        if constraint_embedding is None:
+            raise ValueError("Constraint embedding is None but constraint_method is not 'none'. This might indicate an error in masking_reasons tensor.")
+            
+        if self.constraint_method == 'linear':
+            # linear embedding method: linear projection and mean
             constraint_embedding = self.constraint_linear(constraint_embedding)
-            # Take mean over locations [batch_size, embed_dim]
             constraint_embedding = constraint_embedding.mean(dim=1)
-        
-        # Concatenate state and constraint embeddings [batch_size, embed_dim + 1]
+            
+        elif self.constraint_method == 'weighted':
+            # weighted method: weighted sum across nodes
+            node_weights = self.node_weights.expand(
+                constraint_embedding.size(0), 
+                constraint_embedding.size(1), 
+                1
+            )
+            constraint_embedding = (constraint_embedding * node_weights).sum(dim=1)
+
+            
         return torch.cat([state_embedding, constraint_embedding], dim=-1)
 
-## TODO: 상속 수정
+
 class VRPTWContext(EnvContext):
-    """Context embedding for the Capacitated Vehicle Routing Problem (CVRP).
-    Project the following to the embedding space:
-        - current node embedding
-        - remaining capacity (vehicle_capacity - used_capacity)
-        - current time
-    """
-    ## TODO: masking reasons를 임베딩하려면 상속 방식을 바꿔야 할 거 같음
-    def __init__(self, embed_dim):
+    """Context embedding for the VRPTW."""
+
+    def __init__(self, embed_dim, constraint_method='none'):
+        # Calculate step_context_dim based on constraint method
+        if constraint_method == 'none':
+            step_context_dim = embed_dim + 2  # node embedding + capacity + time
+        elif constraint_method == 'linear':
+            step_context_dim = 2 * embed_dim + 2  # node embedding + constraint embedding + capacity + time
+        elif constraint_method == 'weighted':
+            step_context_dim = embed_dim + 5  # weighted constraint embedding + capacity + time
+        
         super(VRPTWContext, self).__init__(
-            embed_dim=embed_dim, step_context_dim=2 * embed_dim + 2, num_reasons=3
+            embed_dim=embed_dim,
+            step_context_dim=step_context_dim,
+            num_reasons=3 if constraint_method != 'none' else None
         )
+        self.constraint_method = constraint_method
+        if constraint_method == 'weighted':
+            self.node_weights = nn.Parameter(torch.ones(1))
 
     def _state_embedding(self, embeddings, td):
-        # capacity = super()._state_embedding(embeddings, td)
+        # current time and remaining capacity [batch_size, 2]
         current_time = td["current_time"]
         remaining_capacity = td["vehicle_capacity"] - td["used_capacity"]
-        # Get constraint embedding [batch_size, num_loc, num_reasons]
+        
+        # constraint method: none
+        if self.constraint_method == 'none':
+            return torch.cat([remaining_capacity, current_time], -1)
+        
+        # onehot encoding
         constraint_embedding = self.masking_encoder.onehot_encode(td["masking_reasons"])
-        if constraint_embedding is not None:
-            # Project constraints to embedding space [batch_size, num_loc, embed_dim]
+        if constraint_embedding is None:
+            raise ValueError("Constraint embedding is None but constraint_method is not 'none'. This might indicate an error in masking_reasons tensor.")
+            
+        # linear embedding
+        if self.constraint_method == 'linear':
             constraint_embedding = self.constraint_linear(constraint_embedding)
-            # Take mean over locations [batch_size, embed_dim]
             constraint_embedding = constraint_embedding.mean(dim=1)
-
+            
+        # weighted embedding
+        elif self.constraint_method == 'weighted':
+            node_weights = self.node_weights.expand(
+                constraint_embedding.size(0), 
+                constraint_embedding.size(1), 
+                1
+            )
+            constraint_embedding = (constraint_embedding * node_weights).sum(dim=1)
+            
         return torch.cat([remaining_capacity, current_time, constraint_embedding], -1)
 
 
