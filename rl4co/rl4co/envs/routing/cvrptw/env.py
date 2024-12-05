@@ -232,18 +232,18 @@ class CVRPTWEnv(CVRPEnv):
         type: str = None,
         compute_edge_weights: bool = False,
     ):
-        if solomon:
-            assert type in [
-                "instance",
-                "solution",
-            ], "type must be either 'instance' or 'solution'"
-            if type == "instance":
-                instance = load_solomon_instance(
-                    name=name, path=path_instances, edge_weights=compute_edge_weights
-                )
-            elif type == "solution":
-                instance = load_solomon_solution(name=name, path=path_instances)
-            return instance
+        # if solomon:
+        #     assert type in [
+        #         "instance",
+        #         "solution",
+        #     ], "type must be either 'instance' or 'solution'"
+        #     if type == "instance":
+        #         instance = load_solomon_instance(
+        #             name=name, path=path_instances, edge_weights=compute_edge_weights
+        #         )
+        #     elif type == "solution":
+        #         instance = load_solomon_solution(name=name, path=path_instances)
+        #     return instance
         return load_npz_to_tensordict(filename=name)
 
     def extract_from_solomon(self, instance: dict, batch_size: int = 1):

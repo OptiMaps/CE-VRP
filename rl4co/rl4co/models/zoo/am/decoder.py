@@ -77,6 +77,7 @@ class AttentionModelDecoder(AutoregressiveDecoder):
         out_bias_pointer_attn: bool = False,
         linear_bias: bool = False,
         use_graph_context: bool = True,
+        constraint_method: str = 'none',
         check_nan: bool = True,
         sdpa_fn: callable = None,
         pointer: nn.Module = None,
@@ -93,7 +94,13 @@ class AttentionModelDecoder(AutoregressiveDecoder):
         assert embed_dim % num_heads == 0
 
         self.context_embedding = (
-            env_context_embedding(self.env_name, {"embed_dim": embed_dim})
+            env_context_embedding(
+                self.env_name, 
+                {
+                    "embed_dim": embed_dim,
+                    "constraint_method": constraint_method
+                }
+            )
             if context_embedding is None
             else context_embedding
         )

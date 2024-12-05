@@ -16,7 +16,7 @@ logger:
     project: "rl4co"
     tags: ["am", "${env.name}"]
     group: ${env.name}${env.generator_params.num_loc}
-    name: am-${env.name}${env.generator_params.num_loc}
+    name: am-${env.name}${env.generator_params.num_loc}-${model.policy_kwargs.constraint_method}
 
 model:
   batch_size: 512
@@ -32,6 +32,8 @@ model:
   lr_scheduler_kwargs:
     milestones: [80, 95]
     gamma: 0.1
+  policy_kwargs:
+    constraint_method: "weighted"
 
 trainer:
   max_epochs: 100
