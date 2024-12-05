@@ -34,6 +34,7 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends\
     libxmlsec1-dev \
     libffi-dev \
     liblzma-dev \
+    gh \
     python3-openssl && \
     rm -rf /var/lib/apt/lists/*
 
