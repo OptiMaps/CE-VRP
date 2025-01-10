@@ -1,0 +1,3 @@
+_target_: main.models.am.model.AttentionModel
+
+baseline: "rollout"
